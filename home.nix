@@ -12,9 +12,21 @@
   programs.neovim.enable = true;
   programs.zsh.enable = true;
   programs.oh-my-posh.enable = true;
-
+  programs.git = {
+    enable = true;
+    ignores = ["*~" ".DS_Store" ];
+    extraConfig = {
+      core = {
+        editor = "nvim";
+      };
+      pull = {
+        rebase = true;
+      };
+    };
+  };
   home.packages = [
     pkgs.awscli
     pkgs.wget
   ];
+
 }
