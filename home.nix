@@ -20,4 +20,6 @@
   programs.home-manager.enable = true;
   programs.bat.enable = true;
   programs.gh.enable = true;
+  programs.neovim.enable = true;
+  programs.fish.enable = true;
 }
