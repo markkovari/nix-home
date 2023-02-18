@@ -1,0 +1,290 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="IE=edge"><meta name=viewport content="width=device-width,initial-scale=1"><meta name=robots content="noodp, index, follow"><title>Dev Environment Setup With Nix on MacOS | Mathias Polligkeit</title><link rel=sitemap type=application/xml title=Sitemap href=https://www.mathiaspolligkeit.com/sitemap.xml><link rel=stylesheet href=/assets/app.css><link rel=canonical href=https://www.mathiaspolligkeit.com/dev/exploring-nix-on-macos/><meta name=description content="In the last couple of days, I played bit with Nix on MacOS. This is a summary of
+my current setup."></head><body><div class=with-header-and-footer><header class=header><div class=header-title><a class=logo href=/>Mathias Polligkeit</a></div><nav class=header-links aria-label=Main><ul class=navbar><li><a href=/dev/>Dev</a></li><li><a href=/impro/>Impro</a></li><li><a href=/sheet-music/>Sheet Music</a></li><li><a href=/contact/>Contact</a></li></ul></nav></header><main class=container><article class="single-column stack"><div class=publish-date><time datetime=2020-07-22>Jul 22, 2020</time>
+(last updated: <time datetime=2022-10-27>Oct 27, 2022</time>)</div><h1>Dev Environment Setup With Nix on MacOS</h1><p>In the last couple of days, I played bit with <a href=https://nixos.org>Nix</a> on MacOS. This is a summary of
+my current setup.</p><p>This article does not go into details about what Nix is or why you would want to use it. For more information on that, read <a href=https://serokell.io/blog/what-is-nix>What Is Nix and Why You Should Use It</a>.</p><h2 id=installation>Installation</h2><p>To install Nix on MacOS as a multi-user installation, run:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:2;-o-tab-size:2;tab-size:2><code class=language-bash data-lang=bash><span style=display:flex><span>sh &lt;<span style=color:#719e07>(</span>curl -L https://nixos.org/nix/install<span style=color:#719e07>)</span> --daemon
+</span></span></code></pre></div><p>Since <code>/</code> is read-only since MacOS Catalina, the installation script will create
+an APFS volume for the Nix store and mount it at <code>/nix</code>. See <a href=https://nixos.org/manual/nix/stable/installation/installing-binary.html#installing-a-binary-distribution>manual</a>.</p><p>You may need to source the nix profile at this point.</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:2;-o-tab-size:2;tab-size:2><code class=language-bash data-lang=bash><span style=display:flex><span><span style=color:#b58900>source</span> /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
+</span></span><span style=display:flex><span><span style=color:#b58900>source</span> /nix/var/nix/profiles/default/etc/profile.d/nix.sh
+</span></span></code></pre></div><p>If you want to configure the operating system via Nix, you can install
+<a href=https://github.com/LnL7/nix-darwin>Nix Darwin</a>. I skipped this for now and
+only use Nix for installing packages and managing the home directory. To see the
+options you can set with Nix Darwin, refer to the
+<a href=https://daiderd.com/nix-darwin/manual/index.html#sec-options>Nix Darwin manual</a>.</p><p>To manage the home directory, I&rsquo;m using <a href=https://github.com/rycee/home-manager>Home Manager</a>.
+If you are using Nix Darwin, you can install it as a <a href=https://rycee.gitlab.io/home-manager/index.html#sec-install-nix-darwin-module>Nix Darwin module</a>.
+If not, you can use the <a href=https://rycee.gitlab.io/home-manager/index.html#sec-install-standalone>standalone installation</a>.</p><p>Note that the following instructions are for the standalone installation. If you
+use Nix Darwin, the configuration file will be at a different location and
+include the configuration specific to Nix Darwin.</p><h2 id=installing-packages>Installing Packages</h2><p>To allow installing unfree software via Nix, create the file <code>~/.config/nixpkgs/config.nix</code>
+with this content:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:2;-o-tab-size:2;tab-size:2><code class=language-nix data-lang=nix><span style=display:flex><span>{
+</span></span><span style=display:flex><span>  allowUnfree <span style=color:#719e07>=</span> <span style=color:#cb4b16>true</span>;
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>To find a package, run:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:2;-o-tab-size:2;tab-size:2><code class=language-bash data-lang=bash><span style=display:flex><span>nix search kubectl
+</span></span></code></pre></div><p>Add the packages you want to install for your user to
+<code>~/.config/nixpkgs/home.nix</code>. It might look something like this:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:2;-o-tab-size:2;tab-size:2><code class=language-nix data-lang=nix><span style=display:flex><span>{ config<span style=color:#719e07>,</span> pkgs<span style=color:#719e07>,</span> lib<span style=color:#719e07>,</span> <span style=color:#719e07>...</span> }:
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>{
+</span></span><span style=display:flex><span>  programs<span style=color:#719e07>.</span>home-manager<span style=color:#719e07>.</span>enable <span style=color:#719e07>=</span> <span style=color:#cb4b16>true</span>;
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>  home<span style=color:#719e07>.</span>username <span style=color:#719e07>=</span> <span style=color:#2aa198>&#34;myusername&#34;</span>;
+</span></span><span style=display:flex><span>  home<span style=color:#719e07>.</span>homeDirectory <span style=color:#719e07>=</span> <span style=color:#2aa198>&#34;/Users/myusername&#34;</span>;
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>  home<span style=color:#719e07>.</span>stateVersion <span style=color:#719e07>=</span> <span style=color:#2aa198>&#34;21.05&#34;</span>;
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>  home<span style=color:#719e07>.</span>packages <span style=color:#719e07>=</span> [
+</span></span><span style=display:flex><span>    pkgs<span style=color:#719e07>.</span>_1password
+</span></span><span style=display:flex><span>    pkgs<span style=color:#719e07>.</span>awscli
+</span></span><span style=display:flex><span>    pkgs<span style=color:#719e07>.</span>circleci-cli
+</span></span><span style=display:flex><span>    pkgs<span style=color:#719e07>.</span>fish
+</span></span><span style=display:flex><span>    pkgs<span style=color:#719e07>.</span>git
+</span></span><span style=display:flex><span>    pkgs<span style=color:#719e07>.</span>google-cloud-sdk
+</span></span><span style=display:flex><span>    pkgs<span style=color:#719e07>.</span>graphviz
+</span></span><span style=display:flex><span>    pkgs<span style=color:#719e07>.</span>htop
+</span></span><span style=display:flex><span>    pkgs<span style=color:#719e07>.</span>kubectl
+</span></span><span style=display:flex><span>    pkgs<span style=color:#719e07>.</span>kubernetes-helm
+</span></span><span style=display:flex><span>    pkgs<span style=color:#719e07>.</span>kubetail
+</span></span><span style=display:flex><span>    pkgs<span style=color:#719e07>.</span>hugo
+</span></span><span style=display:flex><span>    pkgs<span style=color:#719e07>.</span>jq
+</span></span><span style=display:flex><span>    pkgs<span style=color:#719e07>.</span>minikube
+</span></span><span style=display:flex><span>    pkgs<span style=color:#719e07>.</span>nodejs-12_x
+</span></span><span style=display:flex><span>    pkgs<span style=color:#719e07>.</span>plantuml
+</span></span><span style=display:flex><span>    pkgs<span style=color:#719e07>.</span>python3
+</span></span><span style=display:flex><span>    pkgs<span style=color:#719e07>.</span>tasksh
+</span></span><span style=display:flex><span>    pkgs<span style=color:#719e07>.</span>taskwarrior
+</span></span><span style=display:flex><span>    pkgs<span style=color:#719e07>.</span>terraform
+</span></span><span style=display:flex><span>    pkgs<span style=color:#719e07>.</span>tldr
+</span></span><span style=display:flex><span>    pkgs<span style=color:#719e07>.</span>tree
+</span></span><span style=display:flex><span>    pkgs<span style=color:#719e07>.</span>watson
+</span></span><span style=display:flex><span>    pkgs<span style=color:#719e07>.</span>yarn
+</span></span><span style=display:flex><span>    pkgs<span style=color:#719e07>.</span>yq
+</span></span><span style=display:flex><span>  ];
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>After changing the configuration, run:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:2;-o-tab-size:2;tab-size:2><code class=language-bash data-lang=bash><span style=display:flex><span>home-manager switch
+</span></span></code></pre></div><h2 id=git>Git</h2><p>You can use Home Manager to configure Git by adding something like this to
+<code>.config/nixpkgs/home.nix</code>:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:2;-o-tab-size:2;tab-size:2><code class=language-nix data-lang=nix><span style=display:flex><span>{ config<span style=color:#719e07>,</span> pkgs<span style=color:#719e07>,</span> lib<span style=color:#719e07>,</span> <span style=color:#719e07>...</span> }:
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>{
+</span></span><span style=display:flex><span>  <span style=color:#586e75># ...</span>
+</span></span><span style=display:flex><span>  programs<span style=color:#719e07>.</span>git <span style=color:#719e07>=</span> {
+</span></span><span style=display:flex><span>    enable <span style=color:#719e07>=</span> <span style=color:#cb4b16>true</span>;
+</span></span><span style=display:flex><span>    userEmail <span style=color:#719e07>=</span> <span style=color:#2aa198>&#34;email@example.com&#34;</span>;
+</span></span><span style=display:flex><span>    userName <span style=color:#719e07>=</span> <span style=color:#2aa198>&#34;Mrs. Developer&#34;</span>;
+</span></span><span style=display:flex><span>    signing<span style=color:#719e07>.</span>key <span style=color:#719e07>=</span> <span style=color:#2aa198>&#34;1234ABCD&#34;</span>;
+</span></span><span style=display:flex><span>    signing<span style=color:#719e07>.</span>signByDefault <span style=color:#719e07>=</span> <span style=color:#cb4b16>true</span>;
+</span></span><span style=display:flex><span>    ignores <span style=color:#719e07>=</span> [ <span style=color:#2aa198>&#34;*~&#34;</span> <span style=color:#2aa198>&#34;.DS_Store&#34;</span> ];
+</span></span><span style=display:flex><span>    extraConfig <span style=color:#719e07>=</span> {
+</span></span><span style=display:flex><span>      core <span style=color:#719e07>=</span> {
+</span></span><span style=display:flex><span>        editor <span style=color:#719e07>=</span> <span style=color:#2aa198>&#34;nano&#34;</span>;
+</span></span><span style=display:flex><span>      };
+</span></span><span style=display:flex><span>      url <span style=color:#719e07>=</span> {
+</span></span><span style=display:flex><span>        <span style=color:#2aa198>&#34;git@github.com:&#34;</span> <span style=color:#719e07>=</span> {
+</span></span><span style=display:flex><span>          insteadOf <span style=color:#719e07>=</span> <span style=color:#2aa198>&#34;https://github.com/&#34;</span>;
+</span></span><span style=display:flex><span>        };
+</span></span><span style=display:flex><span>      };
+</span></span><span style=display:flex><span>      pull <span style=color:#719e07>=</span> {
+</span></span><span style=display:flex><span>        rebase <span style=color:#719e07>=</span> <span style=color:#cb4b16>true</span>;
+</span></span><span style=display:flex><span>      };
+</span></span><span style=display:flex><span>    };
+</span></span><span style=display:flex><span>  };
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>Refer to the manual for <a href=https://rycee.gitlab.io/home-manager/options.html#opt-programs.git.enable>all available options</a>.</p><p>Note: If there is already a git configuration file, you need to remove or rename
+it before the new configuration can be applied. This holds true for any other
+configuration files as well.</p><h2 id=environment-variables>Environment Variables</h2><p>You can set environment variables with <code>home.sessionVariables</code>:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:2;-o-tab-size:2;tab-size:2><code class=language-nix data-lang=nix><span style=display:flex><span>{ config<span style=color:#719e07>,</span> pkgs<span style=color:#719e07>,</span> lib<span style=color:#719e07>,</span> <span style=color:#719e07>...</span> }:
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>{
+</span></span><span style=display:flex><span>  <span style=color:#586e75># ...</span>
+</span></span><span style=display:flex><span>  home<span style=color:#719e07>.</span>sessionVariables <span style=color:#719e07>=</span> {
+</span></span><span style=display:flex><span>    EDITOR <span style=color:#719e07>=</span> <span style=color:#2aa198>&#34;nano&#34;</span>;
+</span></span><span style=display:flex><span>  };
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><h2 id=fish>Fish</h2><p>Configure <a href=https://fishshell.com>Fish</a> with Home Manager by adding this to
+<code>~/.config/nixpkgs/home.nix</code>:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:2;-o-tab-size:2;tab-size:2><code class=language-nix data-lang=nix><span style=display:flex><span>{ config<span style=color:#719e07>,</span> pkgs<span style=color:#719e07>,</span> lib<span style=color:#719e07>,</span> <span style=color:#719e07>...</span> }:
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>{
+</span></span><span style=display:flex><span>  <span style=color:#586e75># ...</span>
+</span></span><span style=display:flex><span>  programs<span style=color:#719e07>.</span>fish <span style=color:#719e07>=</span> {
+</span></span><span style=display:flex><span>    enable <span style=color:#719e07>=</span> <span style=color:#cb4b16>true</span>;
+</span></span><span style=display:flex><span>  };
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><h3 id=oh-my-fish-plugins>Oh My Fish Plugins</h3><p>You can add any <a href=https://github.com/oh-my-fish/oh-my-fish>Oh My Fish</a> plugin
+without actually installing Oh My Fish by adding it to <code>programs.fish.plugins</code>.</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:2;-o-tab-size:2;tab-size:2><code class=language-nix data-lang=nix><span style=display:flex><span>{ config<span style=color:#719e07>,</span> pkgs<span style=color:#719e07>,</span> lib<span style=color:#719e07>,</span> <span style=color:#719e07>...</span> }:
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>{
+</span></span><span style=display:flex><span>  <span style=color:#586e75># ...</span>
+</span></span><span style=display:flex><span>  programs<span style=color:#719e07>.</span>fish <span style=color:#719e07>=</span> {
+</span></span><span style=display:flex><span>    enable <span style=color:#719e07>=</span> <span style=color:#cb4b16>true</span>;
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    plugins <span style=color:#719e07>=</span> [
+</span></span><span style=display:flex><span>      {
+</span></span><span style=display:flex><span>        name <span style=color:#719e07>=</span> <span style=color:#2aa198>&#34;bass&#34;</span>;
+</span></span><span style=display:flex><span>        src <span style=color:#719e07>=</span> pkgs<span style=color:#719e07>.</span>fetchFromGitHub {
+</span></span><span style=display:flex><span>          owner <span style=color:#719e07>=</span> <span style=color:#2aa198>&#34;edc&#34;</span>;
+</span></span><span style=display:flex><span>          repo <span style=color:#719e07>=</span> <span style=color:#2aa198>&#34;bass&#34;</span>;
+</span></span><span style=display:flex><span>          rev <span style=color:#719e07>=</span> <span style=color:#2aa198>&#34;50eba266b0d8a952c7230fca1114cbc9fbbdfbd4&#34;</span>;
+</span></span><span style=display:flex><span>          sha256 <span style=color:#719e07>=</span> <span style=color:#2aa198>&#34;0ppmajynpb9l58xbrcnbp41b66g7p0c9l2nlsvyjwk6d16g4p4gy&#34;</span>;
+</span></span><span style=display:flex><span>        };
+</span></span><span style=display:flex><span>      }
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>      {
+</span></span><span style=display:flex><span>        name <span style=color:#719e07>=</span> <span style=color:#2aa198>&#34;foreign-env&#34;</span>;
+</span></span><span style=display:flex><span>        src <span style=color:#719e07>=</span> pkgs<span style=color:#719e07>.</span>fetchFromGitHub {
+</span></span><span style=display:flex><span>          owner <span style=color:#719e07>=</span> <span style=color:#2aa198>&#34;oh-my-fish&#34;</span>;
+</span></span><span style=display:flex><span>          repo <span style=color:#719e07>=</span> <span style=color:#2aa198>&#34;plugin-foreign-env&#34;</span>;
+</span></span><span style=display:flex><span>          rev <span style=color:#719e07>=</span> <span style=color:#2aa198>&#34;dddd9213272a0ab848d474d0cbde12ad034e65bc&#34;</span>;
+</span></span><span style=display:flex><span>          sha256 <span style=color:#719e07>=</span> <span style=color:#2aa198>&#34;00xqlyl3lffc5l0viin1nyp819wf81fncqyz87jx8ljjdhilmgbs&#34;</span>;
+</span></span><span style=display:flex><span>        };
+</span></span><span style=display:flex><span>      }
+</span></span><span style=display:flex><span>    ]
+</span></span><span style=display:flex><span>  };
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>The options for <code>pkgs.fetchFromGithub</code> are:</p><ul><li><code>owner</code>: The Github repo owner name.</li><li><code>repo</code>: Guess what.</li><li><code>rev</code>: The commit hash or tag.</li><li><code>sha256</code>: The hash of the extracted directory.</li></ul><p>To find the correct value for <code>sha256</code>:</p><ol><li>Set <code>sha256 = lib.fakeSha256</code>.</li><li>Run <code>home-manager switch</code>.</li></ol><p>In the output, you should see something similar to:</p><pre tabindex=0><code>hash mismatch in fixed-output derivation &#39;/nix/store/74010535gk31hpxnmsbwda8dgz2i8ajq-source&#39;:
+  wanted: sha256:0000000000000000000000000000000000000000000000000000
+  got: sha256:00xqlyl3lffc5l0viin1nyp819wf81fncqyz87jx8ljjdhilmgbs
+</code></pre><p>You can now copy that sha256 hash.</p><h3 id=oh-my-fish-themes>Oh My Fish Themes</h3><p>You can install Oh My Fish themes just the same way:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:2;-o-tab-size:2;tab-size:2><code class=language-nix data-lang=nix><span style=display:flex><span>  programs<span style=color:#719e07>.</span>fish = {
+</span></span><span style=display:flex><span>    <span style=color:#586e75># ...</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    plugins <span style=color:#719e07>=</span> [
+</span></span><span style=display:flex><span>      <span style=color:#586e75># ...</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>      {
+</span></span><span style=display:flex><span>        name <span style=color:#719e07>=</span> <span style=color:#2aa198>&#34;bobthefish&#34;</span>;
+</span></span><span style=display:flex><span>        src <span style=color:#719e07>=</span> pkgs<span style=color:#719e07>.</span>fetchFromGitHub {
+</span></span><span style=display:flex><span>          owner <span style=color:#719e07>=</span> <span style=color:#2aa198>&#34;oh-my-fish&#34;</span>;
+</span></span><span style=display:flex><span>          repo <span style=color:#719e07>=</span> <span style=color:#2aa198>&#34;theme-bobthefish&#34;</span>;
+</span></span><span style=display:flex><span>          rev <span style=color:#719e07>=</span> <span style=color:#2aa198>&#34;a2ad38aa051aaed25ae3bd6129986e7f27d42d7b&#34;</span>;
+</span></span><span style=display:flex><span>          sha256 <span style=color:#719e07>=</span> <span style=color:#2aa198>&#34;1fssb5bqd2d7856gsylf93d28n3rw4rlqkhbg120j5ng27c7v7lq&#34;</span>;
+</span></span><span style=display:flex><span>        };
+</span></span><span style=display:flex><span>      }
+</span></span><span style=display:flex><span>    ]
+</span></span><span style=display:flex><span>  };
+</span></span></code></pre></div><p>If you have a look at <code>.config/fish/conf.d/plugin-bobthefish.fish</code> (or any
+other plugin file in the same folder), you will see that by default, only
+<code>$plugin_dir/conf.d/*.fish</code>, <code>$plugin_dir/key_bindings.fish</code> and
+<code>$plugin_dir/init.fish</code> are sourced. However, Oh My Fish themes have all
+the necessary fish files in the root directory of the plugin. To actually
+activate the theme, you need to append the plugin file like this:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:2;-o-tab-size:2;tab-size:2><code class=language-nix data-lang=nix><span style=display:flex><span>{ config<span style=color:#719e07>,</span> pkgs<span style=color:#719e07>,</span> lib<span style=color:#719e07>,</span> <span style=color:#719e07>...</span> }:
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>{
+</span></span><span style=display:flex><span>  <span style=color:#586e75># ...</span>
+</span></span><span style=display:flex><span>  programs<span style=color:#719e07>.</span>fish <span style=color:#719e07>=</span> {
+</span></span><span style=display:flex><span>    <span style=color:#586e75># ...</span>
+</span></span><span style=display:flex><span>  };
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>  xdg<span style=color:#719e07>.</span>configFile<span style=color:#719e07>.</span><span style=color:#2aa198>&#34;fish/conf.d/plugin-bobthefish.fish&#34;</span><span style=color:#719e07>.</span>text <span style=color:#719e07>=</span> lib<span style=color:#719e07>.</span>mkAfter <span style=color:#2aa198>&#39;&#39;
+</span></span></span><span style=display:flex><span><span style=color:#2aa198>    for f in $plugin_dir/*.fish
+</span></span></span><span style=display:flex><span><span style=color:#2aa198>      source $f
+</span></span></span><span style=display:flex><span><span style=color:#2aa198>    end
+</span></span></span><span style=display:flex><span><span style=color:#2aa198>    &#39;&#39;</span>;
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>After you run <code>home-manager switch</code>, <code>.config/fish/conf.d/plugin-bobthefish.fish</code>
+will be updated and the theme will be activated when you open a new shell.</p><h3 id=sourcing-the-nix-profile>Sourcing the Nix profile</h3><p>In the current state, the nix profile is not sourced automatically. To change
+that, add this:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:2;-o-tab-size:2;tab-size:2><code class=language-nix data-lang=nix><span style=display:flex><span>  programs<span style=color:#719e07>.</span>fish = {
+</span></span><span style=display:flex><span>    <span style=color:#586e75># ...</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    loginShellInit <span style=color:#719e07>=</span> <span style=color:#2aa198>&#39;&#39;
+</span></span></span><span style=display:flex><span><span style=color:#2aa198>      if test -e /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
+</span></span></span><span style=display:flex><span><span style=color:#2aa198>        fenv source /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
+</span></span></span><span style=display:flex><span><span style=color:#2aa198>      end
+</span></span></span><span style=display:flex><span><span style=color:#2aa198>
+</span></span></span><span style=display:flex><span><span style=color:#2aa198>      if test -e /nix/var/nix/profiles/default/etc/profile.d/nix.sh
+</span></span></span><span style=display:flex><span><span style=color:#2aa198>        fenv source /nix/var/nix/profiles/default/etc/profile.d/nix.sh
+</span></span></span><span style=display:flex><span><span style=color:#2aa198>      end
+</span></span></span><span style=display:flex><span><span style=color:#2aa198>      &#39;&#39;</span>;
+</span></span><span style=display:flex><span>  };
+</span></span></code></pre></div><p>Note that this code makes use of the <code>foreign-env</code> plugin installed above.</p><h2 id=set-up-a-config-repository>Set up a config repository</h2><p>I think it is a good idea to put your configuration into a Git repository. One
+way to do that is described in the tutorial
+<a href=https://www.atlassian.com/git/tutorials/dotfiles>The best way to store your dotfiles: A bare Git repository</a>.</p><p>Basically you initialize a bare git repository and define an alias to make
+working with this repo easier.</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:2;-o-tab-size:2;tab-size:2><code class=language-bash data-lang=bash><span style=display:flex><span>git init --bare <span style=color:#268bd2>$HOME</span>/.cfg
+</span></span><span style=display:flex><span><span style=color:#b58900>alias</span> <span style=color:#268bd2>config</span><span style=color:#719e07>=</span><span style=color:#2aa198>&#39;git --git-dir=$HOME/.cfg/ --work-tree=$HOME&#39;</span>
+</span></span><span style=display:flex><span>config config --local status.showUntrackedFiles no
+</span></span></code></pre></div><p>You can now commit the config that we have so far with:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:2;-o-tab-size:2;tab-size:2><code class=language-bash data-lang=bash><span style=display:flex><span>config add ~/.config/nixpkgs
+</span></span><span style=display:flex><span>config commit -m <span style=color:#2aa198>&#34;add nix configuration&#34;</span>
+</span></span></code></pre></div><p>To make the alias always available in Fish, add it to
+<code>.config/nixpkgs/home.nix</code>:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:2;-o-tab-size:2;tab-size:2><code class=language-nix data-lang=nix><span style=display:flex><span>  programs<span style=color:#719e07>.</span>fish = {
+</span></span><span style=display:flex><span>    <span style=color:#586e75># ...</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    shellAliases <span style=color:#719e07>=</span> {
+</span></span><span style=display:flex><span>      config <span style=color:#719e07>=</span> <span style=color:#2aa198>&#34;git --git-dir=$HOME/.cfg/ --work-tree=$HOME&#34;</span>;
+</span></span><span style=display:flex><span>    };
+</span></span><span style=display:flex><span>  };
+</span></span></code></pre></div><p>You can set up a new machine like this:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:2;-o-tab-size:2;tab-size:2><code class=language-bash data-lang=bash><span style=display:flex><span>git clone --bare &lt;git-repo-url&gt; <span style=color:#268bd2>$HOME</span>/.cfg
+</span></span><span style=display:flex><span><span style=color:#b58900>alias</span> <span style=color:#268bd2>config</span><span style=color:#719e07>=</span><span style=color:#2aa198>&#39;git --git-dir=$HOME/.cfg/ --work-tree=$HOME&#39;</span>
+</span></span><span style=display:flex><span>config config --local status.showUntrackedFiles no
+</span></span><span style=display:flex><span>config checkout
+</span></span></code></pre></div><h2 id=outside-of-nix>Outside of Nix</h2><h3 id=brew>Brew</h3><p>You can now install nearly all the packages you need with Nix instead of
+<a href=https://brew.sh/>Homebrew</a>, but if you want to install GUI tools via the
+command line, you will still need to use
+<a href=https://github.com/Homebrew/homebrew-cask>Homebrew Cask</a>. To make it easier
+to sync the casks across machines, you can create a <code>Brewfile</code> and add it to
+the config repo.</p><p>If you already have casks installed and want to create a <code>Brewfile</code> for the
+first time, run:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:2;-o-tab-size:2;tab-size:2><code class=language-bash data-lang=bash><span style=display:flex><span>brew bundle dump
+</span></span></code></pre></div><p>The result will look something like this:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:2;-o-tab-size:2;tab-size:2><code class=language-bash data-lang=bash><span style=display:flex><span>tap <span style=color:#2aa198>&#34;homebrew/bundle&#34;</span>
+</span></span><span style=display:flex><span>tap <span style=color:#2aa198>&#34;homebrew/cask&#34;</span>
+</span></span><span style=display:flex><span>tap <span style=color:#2aa198>&#34;homebrew/core&#34;</span>
+</span></span><span style=display:flex><span>tap <span style=color:#2aa198>&#34;homebrew/services&#34;</span>
+</span></span><span style=display:flex><span>cask <span style=color:#2aa198>&#34;docker&#34;</span>
+</span></span><span style=display:flex><span>cask <span style=color:#2aa198>&#34;firefox&#34;</span>
+</span></span><span style=display:flex><span>cask <span style=color:#2aa198>&#34;flux&#34;</span>
+</span></span><span style=display:flex><span>cask <span style=color:#2aa198>&#34;iterm2&#34;</span>
+</span></span><span style=display:flex><span>cask <span style=color:#2aa198>&#34;karabiner-elements&#34;</span>
+</span></span><span style=display:flex><span>cask <span style=color:#2aa198>&#34;keybase&#34;</span>
+</span></span><span style=display:flex><span>cask <span style=color:#2aa198>&#34;sublime-merge&#34;</span>
+</span></span><span style=display:flex><span>cask <span style=color:#2aa198>&#34;sublime-text&#34;</span>
+</span></span><span style=display:flex><span>cask <span style=color:#2aa198>&#34;typora&#34;</span>
+</span></span></code></pre></div><p>You can add this file to the repo. To install new packages after editing the
+file, run:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:2;-o-tab-size:2;tab-size:2><code class=language-bash data-lang=bash><span style=display:flex><span>brew bundle install
+</span></span></code></pre></div><p>To uninstall packages after removing them from the file, run:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:2;-o-tab-size:2;tab-size:2><code class=language-bash data-lang=bash><span style=display:flex><span>brew bundle cleanup -f
+</span></span></code></pre></div><p>You can optionally install <a href=https://github.com/mas-cli/mas>mas</a> to manage
+software that is installed via the App Store in the Brewfile as well (see <a href=https://github.com/Homebrew/homebrew-bundle>Homebrew Bundle readme</a>).</p><h3 id=iterm2>iTerm2</h3><p><a href=https://www.iterm2.com>iTerm2</a> has an option to load the preferences from a
+custom location
+(<code>iTerm2 → Preferences → General → Preferences → Load preferences from a custom folder or URL</code>).</p><p>You can set the location to <code>~/.config/iterm2</code>, click <code>Save Current Settings to Folder</code> and add the config to the repo.</p><h3 id=sublime-text-3>Sublime Text 3</h3><p>You can copy the User folder of <a href=https://www.sublimetext.com>Sublime Text 3</a>
+to the config folder, delete the original directory and create a symlink.</p><pre tabindex=0><code>mkdir ~/.config/sublime-text-3
+cp ~/Library/Application\ Support/Sublime\ Text\ 3/Packages/User ~/.config/sublime-text-3
+rm -rf ~/Library/Application\ Support/Sublime\ Text\ 3/Packages/User
+ln -s ~/.config/sublime-text-3/User/ ~/Library/Application\ Support/Sublime\ Text\ 3/Packages/User
+</code></pre><p>Add a <code>.gitignore</code> file:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:2;-o-tab-size:2;tab-size:2><code class=language-bash data-lang=bash><span style=display:flex><span><span style=color:#b58900>echo</span> <span style=color:#2aa198>&#34;.SublimeREPLHistory
+</span></span></span><span style=display:flex><span><span style=color:#2aa198>oscrypto-ca-bundle.crt
+</span></span></span><span style=display:flex><span><span style=color:#2aa198>Package Control.ca-bundle
+</span></span></span><span style=display:flex><span><span style=color:#2aa198>Package Control.ca-certs/
+</span></span></span><span style=display:flex><span><span style=color:#2aa198>Package Control.ca-list
+</span></span></span><span style=display:flex><span><span style=color:#2aa198>Package Control.cache/
+</span></span></span><span style=display:flex><span><span style=color:#2aa198>Package Control.last-run
+</span></span></span><span style=display:flex><span><span style=color:#2aa198>Package Control.merged-ca-bundle
+</span></span></span><span style=display:flex><span><span style=color:#2aa198>Package Control.system-ca-bundle
+</span></span></span><span style=display:flex><span><span style=color:#2aa198>Package Control.user-ca-bundle&#34;</span> &gt;&gt; ~/.config/sublime-text-3/User/.gitignore
+</span></span></code></pre></div><p>And commit the folder to the repo.</p><h2 id=nix-shell>Nix Shell</h2><p>Instead of making packages available globally, you can add a file called
+<code>shell.nix</code> in your projects, which may look something like this:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:2;-o-tab-size:2;tab-size:2><code class=language-nix data-lang=nix><span style=display:flex><span>{ pkgs <span style=color:#719e07>?</span> <span style=color:#719e07>import</span> <span style=color:#dc322f>&lt;nixpkgs&gt;</span> {} }:
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#719e07>with</span> pkgs;
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>mkShell {
+</span></span><span style=display:flex><span>  buildInputs <span style=color:#719e07>=</span> [
+</span></span><span style=display:flex><span>    elixir_1_10
+</span></span><span style=display:flex><span>    nodejs-12_x
+</span></span><span style=display:flex><span>  ];
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>You can get into a shell with these packages available by running:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:2;-o-tab-size:2;tab-size:2><code class=language-bash data-lang=bash><span style=display:flex><span>nix-shell
+</span></span></code></pre></div><h2 id=direnv>Direnv</h2><p>You can use <a href=https://direnv.net>direnv</a> to automatically load the environment
+when changing into a project folder.</p><p>Add this to <code>~/.config/nixpkgs/home.nix</code>:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:2;-o-tab-size:2;tab-size:2><code class=language-nix data-lang=nix><span style=display:flex><span>{ config<span style=color:#719e07>,</span> pkgs<span style=color:#719e07>,</span> lib<span style=color:#719e07>,</span> <span style=color:#719e07>...</span> }:
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>{
+</span></span><span style=display:flex><span>  <span style=color:#586e75># ...</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>  programs<span style=color:#719e07>.</span>direnv<span style=color:#719e07>.</span>enable <span style=color:#719e07>=</span> <span style=color:#cb4b16>true</span>;
+</span></span><span style=display:flex><span>  programs<span style=color:#719e07>.</span>direnv<span style=color:#719e07>.</span>enableNixDirenvIntegration <span style=color:#719e07>=</span> <span style=color:#cb4b16>true</span>;
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>  programs<span style=color:#719e07>.</span>fish <span style=color:#719e07>=</span> {
+</span></span><span style=display:flex><span>    <span style=color:#586e75># ...</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    loginShellInit <span style=color:#719e07>=</span> <span style=color:#2aa198>&#39;&#39;
+</span></span></span><span style=display:flex><span><span style=color:#2aa198>      # ...
+</span></span></span><span style=display:flex><span><span style=color:#2aa198>      eval (direnv hook fish)
+</span></span></span><span style=display:flex><span><span style=color:#2aa198>      &#39;&#39;</span>;
+</span></span><span style=display:flex><span>  };
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>Don&rsquo;t forget to run <code>home-manager switch</code>.</p><p>Create a file called <code>.envrc</code> in your project directory.</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:2;-o-tab-size:2;tab-size:2><code class=language-bash data-lang=bash><span style=display:flex><span><span style=color:#b58900>echo</span> use_nix &gt; .envrc
+</span></span></code></pre></div><p>Then run:</p><div class=highlight><pre tabindex=0 style=color:#93a1a1;background-color:#002b36;-moz-tab-size:2;-o-tab-size:2;tab-size:2><code class=language-bash data-lang=bash><span style=display:flex><span>direnv allow .
+</span></span></code></pre></div><p>From now on, the environment will be automatically loaded whenever you <code>cd</code> into
+the directory and unloaded when you leave it.</p><h2 id=next>Next</h2><p>I haven&rsquo;t looked into handling services like databases or message brokers in
+a Nix shell environment yet. One solution for running a local PostgreSQL
+database is described in the article
+<a href=https://ejpcmac.net/blog/using-nix-in-elixir-projects/#phoenix-projects>Using Nix in Elixir projects</a>.</p><p>If you spotted an error, need a random compliment or have any other remarks, don&rsquo;t
+hesitate to <a href=https://www.mathiaspolligkeit.com/contact/>drop a message</a>.</p><ul class=tags><li><a href=https://www.mathiaspolligkeit.com/tags/nix class=tag>nix</a></li></ul><hr><h4>See Also</h4><ul><li><a href=/dev/elixir-dev-environment-with-nix-flakes/>Elixir Dev Environment With Nix Flakes</a></li><li><a href=/dev/elixir-dev-environment-with-nix/>Elixir Dev Environment With Nix</a></li></ul></article></main><footer><nav aria-label=Footer><ul><li><a href=/privacy-policy/>privacy policy</a></li></ul></nav></footer></div></body></html>
